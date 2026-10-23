@@ -7,3 +7,5 @@ data/dem/*.tif
 data/public/
 data/processed/
 models/
+data/osm/
+data/dem/
