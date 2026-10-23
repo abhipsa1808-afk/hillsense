@@ -97,6 +97,15 @@ class Trees:
         return np.clip(self.m.predict(X[self.features]), 5, 100)
 
 
+def load_saved(path="models/eta_hillsense.pkl"):
+    """Load the saved hillsense model as a Trees object (predicts km/h)."""
+    with open(path, "rb") as f:
+        saved = pickle.load(f)
+    t = Trees(saved["features"])
+    t.m = saved["model"]
+    return t
+
+
 def models():
     return {
         "naive": lambda: Naive(),
@@ -226,8 +235,10 @@ if __name__ == "__main__":
     print(importance.round(3).to_string())
 
     Path("models").mkdir(exist_ok=True)
+    # save the plain sklearn model + its feature list (pickling our own class from a
+    # script run as __main__ would make it unloadable from anywhere else)
     with open("models/eta_hillsense.pkl", "wb") as f:
-        pickle.dump(final["hillsense"], f)
+        pickle.dump({"model": hs.m, "features": hs.features}, f)
     Path("results").mkdir(exist_ok=True)
     cv.to_csv("results/cv_summary.csv")
     own_table.to_csv("results/own_drives_test.csv", index=False)
