@@ -2,7 +2,7 @@
 
 **Steadier GPS tracking and arrival times on hill roads, built from scratch on real drives in Munnar, Kerala.**
 
-> 🔗 **Live demo:** _coming soon_
+> 🔗 **Live demo:** [hillsense-abhipsa.streamlit.app](https://hillsense-abhipsa.streamlit.app)
 
 On a trip to Munnar I drove up the ghat roads to my hotel with Google Maps open. The time and distance left
 kept jumping around: at one point the ETA went **up** while I was getting closer, and on the evening
