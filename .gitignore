@@ -3,3 +3,4 @@ __pycache__/
 .DS_Store
 data/raw/
 *.ipynb_checkpoints
+data/dem/*.tif
