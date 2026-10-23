@@ -9,3 +9,4 @@ data/processed/
 models/
 data/osm/
 data/dem/
+cache/
