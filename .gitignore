@@ -4,3 +4,4 @@ __pycache__/
 data/raw/
 *.ipynb_checkpoints
 data/dem/*.tif
+data/public/
