@@ -48,21 +48,24 @@ d = drives[choice]
 c1, c2, c3, c4 = st.columns(4)
 c1.metric("Raw phone GPS, whole log", f"{d['logged_raw_km']} km")
 c2.metric("hillsense, on real roads", f"{d['road_km']} km",
-          delta=f"{d['road_km'] - d['logged_raw_km']:+.1f} km of GPS noise removed", delta_color="off")
+          delta=f"{d['logged_raw_km'] - d['road_km']:.0f} km of noise removed", delta_color="off")
 c3.metric("Height change", f"{d['climb_m']} m" if d["climb_m"] is not None else "n/a")
 c4.metric("Drive time", f"{d['minutes']:.0f} min")
 
 # ---------------------------------------------------------------- map
 st.subheader("1. Tracking: raw GPS vs hillsense")
 st.caption(
-    f"Red: what the phone recorded. Blue: hillsense (trip detection, Kalman filter, HMM map-matching). "
+    f"Thin red line: what the phone recorded. Blue band: hillsense (trip detection, Kalman filter, HMM "
+    f"map-matching). Zoom in on the hairpins to see where the raw GPS leaves the road. "
     f"For privacy, {demo['privacy_radius_m']:.0f} m around the start and end of each drive is hidden."
 )
-centre = pd.DataFrame(d["matched"], columns=["lat", "lon"]).mean()
-m = folium.Map(location=[centre["lat"], centre["lon"]], zoom_start=13, tiles="OpenStreetMap")
-folium.PolyLine(d["raw"], color=RAW_COLOUR, weight=2, opacity=0.8, tooltip="raw phone GPS").add_to(m)
-folium.PolyLine(d["matched"], color=HILLSENSE_COLOUR, weight=4, opacity=0.9, tooltip="hillsense").add_to(m)
-m.fit_bounds(d["matched"])
+pts = pd.DataFrame(d["matched"] + d["raw"], columns=["lat", "lon"])
+m = folium.Map(location=[pts["lat"].mean(), pts["lon"].mean()], zoom_start=13, tiles="OpenStreetMap")
+# hillsense as a wide see-through band, raw GPS as a thin line on top: wherever
+# the red strays outside the blue band, the phone's GPS was off the road
+folium.PolyLine(d["matched"], color=HILLSENSE_COLOUR, weight=9, opacity=0.45, tooltip="hillsense").add_to(m)
+folium.PolyLine(d["raw"], color=RAW_COLOUR, weight=2, opacity=0.95, tooltip="raw phone GPS").add_to(m)
+m.fit_bounds([[float(pts["lat"].min()), float(pts["lon"].min())], [float(pts["lat"].max()), float(pts["lon"].max())]])
 st_folium(m, height=460, use_container_width=True, returned_objects=[])
 
 # ---------------------------------------------------------------- live ETA replay
@@ -80,8 +83,17 @@ r = pd.DataFrame(d["replay"]).rename(columns={
     "hillsense_min": "hillsense",
 })
 cols = ["actual arrival", "simple: km left ÷ your speed so far", "hillsense"]
-st.line_chart(r, x="minutes driven", y=cols, color=["#555555", RAW_COLOUR, HILLSENSE_COLOUR],
+zoom = st.checkbox("Zoom in (cap the chart at 2× the actual arrival time)", value=True)
+plot = r.copy()
+cap = 2 * plot["actual arrival"].max()
+if zoom:
+    plot[cols] = plot[cols].clip(upper=cap)
+st.line_chart(plot, x="minutes driven", y=cols, color=["#555555", RAW_COLOUR, HILLSENSE_COLOUR],
               y_label="predicted arrival (min after start)")
+peak = r[cols[1]].max()
+if zoom and peak > cap:
+    st.caption(f"The red line actually peaks at {peak:.0f} min (shown capped at {cap:.0f}). "
+               "Untick the box to see it in full.")
 
 t = st.slider("Scrub through the drive (minutes driven)", 0.0, float(r["minutes driven"].max()),
               0.0, step=0.5)
