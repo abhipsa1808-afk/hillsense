@@ -7,7 +7,8 @@ and point order; the rest come back shuffled for privacy, so we drop them.
 
 Steps:
   1. fetch every page for the region (polite: identifies itself, waits
-     between requests, stops at the last page)
+     between requests, retries slow replies, stops at the last page;
+     pages already on disk are skipped, so a re-run resumes where it stopped)
   2. group points by the trace they came from (traces can span pages)
   3. write one GPX file per trace into data/public/<region>/traces/
 
@@ -28,12 +29,29 @@ API = "https://api.openstreetmap.org/api/0.6/trackpoints"
 USER_AGENT = "hillsense/0.1 (student research project on hill-road GPS tracking)"
 POINTS_PER_PAGE = 5000
 WAIT_S = 2.0
-MAX_PAGES = 60
+MAX_PAGES = 100
+TIMEOUT_S = 120
+RETRIES = 4
 
 REGIONS = {
     # name: (west, south, east, north) -- each side at most 0.25 degrees
     "munnar": (77.00, 10.00, 77.22, 10.12),
 }
+
+
+def download(url, tries=RETRIES):
+    """GET with retries: the OSM API is sometimes slow, so wait longer each time."""
+    for attempt in range(1, tries + 1):
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+            with urllib.request.urlopen(req, timeout=TIMEOUT_S) as r:
+                return r.read()
+        except (TimeoutError, OSError) as err:
+            if attempt == tries:
+                raise
+            wait = WAIT_S * 5 * attempt
+            print(f"    slow reply ({type(err).__name__}), retrying in {wait:.0f}s ...")
+            time.sleep(wait)
 
 
 def fetch_pages(region, bbox, out_dir):
@@ -42,9 +60,7 @@ def fetch_pages(region, bbox, out_dir):
         path = out_dir / f"page_{page:03d}.gpx"
         if not path.exists():
             url = f"{API}?bbox={','.join(map(str, bbox))}&page={page}"
-            req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-            with urllib.request.urlopen(req, timeout=60) as r:
-                path.write_bytes(r.read())
+            path.write_bytes(download(url))
             time.sleep(WAIT_S)
         n = path.read_text(errors="ignore").count("<trkpt")
         print(f"  {region} page {page}: {n} points")
@@ -68,9 +84,27 @@ def split_traces(pages_dir, traces_dir):
                 if t:
                     traces[trace_id].append((t, pt.get("lat"), pt.get("lon")))
 
+    # The same drive is often uploaded more than once (e.g. re-exported from an
+    # app). Identical copies would leak between train and test sets and make
+    # the model look better than it is, so keep only the first upload.
+    traces = {tid: sorted(set(p)) for tid, p in traces.items()}
+    seen, duplicates = {}, []
+    for trace_id in sorted(traces, key=int):
+        fingerprint = (len(traces[trace_id]), traces[trace_id][0], traces[trace_id][-1])
+        if fingerprint in seen:
+            duplicates.append((trace_id, seen[fingerprint]))
+        else:
+            seen[fingerprint] = trace_id
+    for trace_id, _ in duplicates:
+        del traces[trace_id]
+    if duplicates:
+        print(f"  dropped {len(duplicates)} duplicate uploads: "
+              + ", ".join(f"{d} (= {o})" for d, o in duplicates))
+
     traces_dir.mkdir(parents=True, exist_ok=True)
+    for old in traces_dir.glob("trace_*.gpx"):
+        old.unlink()  # re-split from scratch so dropped duplicates don't linger
     for trace_id, pts in traces.items():
-        pts = sorted(set(pts))
         body = "\n".join(
             f'<trkpt lat="{lat}" lon="{lon}"><time>{t}</time></trkpt>' for t, lat, lon in pts
         )
