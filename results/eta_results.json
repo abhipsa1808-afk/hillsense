@@ -1,0 +1,160 @@
+{
+  "cv": {
+    "drives": {
+      "naive": 51.0,
+      "road_type": 51.0,
+      "no_terrain": 51.0,
+      "hillsense": 51.0
+    },
+    "median_eta_error_%": {
+      "naive": 16.0,
+      "road_type": 18.0,
+      "no_terrain": 14.6,
+      "hillsense": 14.4
+    },
+    "mean_eta_error_%": {
+      "naive": 19.6,
+      "road_type": 17.7,
+      "no_terrain": 17.7,
+      "hillsense": 17.2
+    }
+  },
+  "own": [
+    {
+      "model": "naive",
+      "drive": "1",
+      "km": 3.8,
+      "true_min": 5.2,
+      "pred_min": 6.6,
+      "err_%": 26.8
+    },
+    {
+      "model": "naive",
+      "drive": "2",
+      "km": 9.6,
+      "true_min": 24.0,
+      "pred_min": 16.8,
+      "err_%": 30.2
+    },
+    {
+      "model": "naive",
+      "drive": "3",
+      "km": 27.8,
+      "true_min": 58.1,
+      "pred_min": 48.7,
+      "err_%": 16.1
+    },
+    {
+      "model": "road_type",
+      "drive": "1",
+      "km": 3.8,
+      "true_min": 5.2,
+      "pred_min": 6.1,
+      "err_%": 16.2
+    },
+    {
+      "model": "road_type",
+      "drive": "2",
+      "km": 9.6,
+      "true_min": 24.0,
+      "pred_min": 17.2,
+      "err_%": 28.4
+    },
+    {
+      "model": "road_type",
+      "drive": "3",
+      "km": 27.8,
+      "true_min": 58.1,
+      "pred_min": 46.6,
+      "err_%": 19.7
+    },
+    {
+      "model": "no_terrain",
+      "drive": "1",
+      "km": 3.8,
+      "true_min": 5.2,
+      "pred_min": 6.6,
+      "err_%": 27.4
+    },
+    {
+      "model": "no_terrain",
+      "drive": "2",
+      "km": 9.6,
+      "true_min": 24.0,
+      "pred_min": 18.5,
+      "err_%": 22.8
+    },
+    {
+      "model": "no_terrain",
+      "drive": "3",
+      "km": 27.8,
+      "true_min": 58.1,
+      "pred_min": 46.7,
+      "err_%": 19.6
+    },
+    {
+      "model": "hillsense",
+      "drive": "1",
+      "km": 3.8,
+      "true_min": 5.2,
+      "pred_min": 7.0,
+      "err_%": 34.3
+    },
+    {
+      "model": "hillsense",
+      "drive": "2",
+      "km": 9.6,
+      "true_min": 24.0,
+      "pred_min": 19.2,
+      "err_%": 20.2
+    },
+    {
+      "model": "hillsense",
+      "drive": "3",
+      "km": 27.8,
+      "true_min": 58.1,
+      "pred_min": 45.2,
+      "err_%": 22.1
+    }
+  ],
+  "live_cv": {
+    "drives": {
+      "naive_static": 49.0,
+      "naive_live": 49.0,
+      "hillsense_static": 49.0,
+      "hillsense_live": 49.0
+    },
+    "time_left_error_%": {
+      "naive_static": 19.53,
+      "naive_live": 25.67,
+      "hillsense_static": 18.39,
+      "hillsense_live": 18.41
+    },
+    "avg_arrival_jump_min": {
+      "naive_static": 0.43,
+      "naive_live": 1.69,
+      "hillsense_static": 0.4,
+      "hillsense_live": 0.49
+    }
+  },
+  "live_own": {
+    "drives": {
+      "naive_static": 2.0,
+      "naive_live": 2.0,
+      "hillsense_static": 2.0,
+      "hillsense_live": 2.0
+    },
+    "time_left_error_%": {
+      "naive_static": 28.48,
+      "naive_live": 73.53,
+      "hillsense_static": 25.03,
+      "hillsense_live": 21.1
+    },
+    "avg_arrival_jump_min": {
+      "naive_static": 0.24,
+      "naive_live": 5.07,
+      "hillsense_static": 0.2,
+      "hillsense_live": 0.28
+    }
+  }
+}

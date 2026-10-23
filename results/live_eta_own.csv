@@ -1,0 +1,5 @@
+,drives,time_left_error_%,avg_arrival_jump_min
+naive_static,2.0,28.48,0.24
+naive_live,2.0,73.53,5.07
+hillsense_static,2.0,25.03,0.2
+hillsense_live,2.0,21.1,0.28

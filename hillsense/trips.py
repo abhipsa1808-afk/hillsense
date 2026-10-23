@@ -40,6 +40,8 @@ def trim_to_trips(points):
         trip = d.iloc[first : last + 1].copy()
         trip.iloc[0, trip.columns.get_indexer(["step_m", "dt_s", "speed_kmh"])] = 0
         kept.append(trip)
+    if not kept:  # no sustained driving anywhere (e.g. a walk or a parked phone)
+        return points.iloc[0:0].copy()
     return pd.concat(kept, ignore_index=True)
 
 

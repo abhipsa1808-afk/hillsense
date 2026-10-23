@@ -5,3 +5,5 @@ data/raw/
 *.ipynb_checkpoints
 data/dem/*.tif
 data/public/
+data/processed/
+models/

@@ -15,7 +15,7 @@ import xml.etree.ElementTree as ET
 import numpy as np
 import pandas as pd
 
-GPX_NS = {"g": "http://www.topografix.com/GPX/1/1"}
+GPX_NAMESPACES = ("http://www.topografix.com/GPX/1/1", "http://www.topografix.com/GPX/1/0")
 EARTH_RADIUS_M = 6_371_000
 IST = "Asia/Kolkata"
 
@@ -29,14 +29,22 @@ def haversine_m(lat1, lon1, lat2, lon2):
 
 
 def load_gpx(path):
-    """Read every track point into a DataFrame sorted by time."""
+    """Read every track point into a DataFrame sorted by time.
+
+    Works with GPX 1.1 (phone apps) and GPX 1.0 (OpenStreetMap downloads).
+    Points without a timestamp are skipped: we can't learn speed from them.
+    """
     root = ET.parse(path).getroot()
+    ns_uri = root.tag[1:].split("}")[0] if root.tag.startswith("{") else GPX_NAMESPACES[0]
+    ns = {"g": ns_uri}
     rows = []
-    for pt in root.iterfind(".//g:trkpt", GPX_NS):
-        ele = pt.find("g:ele", GPX_NS)
+    for pt in root.iterfind(".//g:trkpt", ns):
+        ele, time = pt.find("g:ele", ns), pt.find("g:time", ns)
+        if time is None:
+            continue
         rows.append(
             {
-                "time": pt.find("g:time", GPX_NS).text,
+                "time": time.text,
                 "lat": float(pt.get("lat")),
                 "lon": float(pt.get("lon")),
                 "ele": float(ele.text) if ele is not None else np.nan,
@@ -82,8 +90,8 @@ def summarise(df):
                 "minutes": round((d["time"].iloc[-1] - d["time"].iloc[0]).total_seconds() / 60, 1),
                 "points": len(d),
                 "raw_km": round(d["step_m"].sum() / 1000, 2),
-                "ele_min_m": round(d["ele"].min()),
-                "ele_max_m": round(d["ele"].max()),
+                "ele_min_m": round(d["ele"].min()) if d["ele"].notna().any() else None,
+                "ele_max_m": round(d["ele"].max()) if d["ele"].notna().any() else None,
                 "moving_kmh": round(moving["step_m"].sum() / moving["dt_s"].sum() * 3.6, 1),
                 "gaps_over_30s": int((d["dt_s"] > 30).sum()),
                 "impossible_jumps": int((d["speed_kmh"] > 150).sum()),
